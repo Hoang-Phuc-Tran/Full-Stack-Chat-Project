@@ -1,5 +1,4 @@
-import CssBaseline from "@mui/material/CssBaseline";
-import Box from "@mui/material/Box";
+import { Box, CssBaseline } from "@mui/material";
 import PrimaryAppBar from "./templates/PrimaryAppBar";
 import PrimaryDraw from "./templates/PrimaryDraw";
 import SecondaryDraw from "./templates/SecondaryDraw";
