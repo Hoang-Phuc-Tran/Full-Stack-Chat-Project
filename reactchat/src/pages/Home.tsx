@@ -7,22 +7,26 @@ import Main from "./templates/Main";
 import PopularChannels from "../components/PrimaryDraw/PopularChannel";
 import ExploreCategories from "../components/SecondaryDraw/ExploreCategories";
 import ExploreServers from "../components/Main/ExploreServers";
+import { GlobalStyles } from "@mui/material";
 
 const Home = () => {
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-      <PrimaryAppBar />
-      <PrimaryDraw>
-        <PopularChannels open={false} />
-      </PrimaryDraw>
-      <SecondaryDraw>
-        <ExploreCategories />
-      </SecondaryDraw>
-      <Main>
-        <ExploreServers />
-      </Main>
-    </Box>
+    <>
+      <GlobalStyles styles={{ body: { overflow: "hidden" } }} />
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
+        <PrimaryAppBar />
+        <PrimaryDraw>
+          <PopularChannels open={false} />
+        </PrimaryDraw>
+        <SecondaryDraw>
+          <ExploreCategories />
+        </SecondaryDraw>
+        <Main>
+          <ExploreServers />
+        </Main>
+      </Box>
+    </>
   );
 };
 export default Home;

@@ -1,4 +1,4 @@
-import { Box, CssBaseline } from "@mui/material";
+import { Box, CssBaseline, GlobalStyles } from "@mui/material";
 import PrimaryAppBar from "./templates/PrimaryAppBar";
 import PrimaryDraw from "./templates/PrimaryDraw";
 import SecondaryDraw from "./templates/SecondaryDraw";
@@ -9,19 +9,22 @@ import ExploreServers from "../components/Main/ExploreServers";
 
 const Home = () => {
   return (
-    <Box sx={{ display: "flex" }}>
-      <CssBaseline />
-      <PrimaryAppBar />
-      <PrimaryDraw>
-        <PopularChannels open={false} />
-      </PrimaryDraw>
-      <SecondaryDraw>
-        <ExploreCategories />
-      </SecondaryDraw>
-      <Main>
-        <ExploreServers />
-      </Main>
-    </Box>
+    <>
+      <GlobalStyles styles={{ body: { overflow: "hidden" } }} />
+      <Box sx={{ display: "flex" }}>
+        <CssBaseline />
+        <PrimaryAppBar />
+        <PrimaryDraw>
+          <PopularChannels open={false} />
+        </PrimaryDraw>
+        <SecondaryDraw>
+          <ExploreCategories />
+        </SecondaryDraw>
+        <Main>
+          <ExploreServers />
+        </Main>
+      </Box>
+    </>
   );
 };
 export default Home;

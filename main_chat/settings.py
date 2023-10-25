@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "account",
     "server",
+    "webchat",
 ]
 
 MIDDLEWARE = [
@@ -159,8 +160,4 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
-}
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
