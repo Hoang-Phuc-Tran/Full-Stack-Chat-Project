@@ -12,20 +12,31 @@ from django.conf.urls.static import static
 from webchat.consumer import WebChatConsumer
 from webchat.views import MessageViewSet
 
+# Initializing a default router
 router = DefaultRouter()
+
+# Registering view sets with the router
 router.register("api/server/select", ServerListViewSet)
 router.register("api/server/category", CategoryListViewSet)
 router.register("api/messages", MessageViewSet, basename="message")
 
+# URL patterns for the app
 urlpatterns = [
+    # Admin interface URL
     path("admin/", admin.site.urls),
+    # API schema URL
     path("api/docs/", SpectacularAPIView.as_view(), name="schema"),
+    # Swagger UI URL
     path("api/docs/swagger/ui/", SpectacularSwaggerView.as_view()),
+    # Including the router URLs
 ] + router.urls
 
+# WebSocket URL patterns
 websocket_urlpatterns = [
+    # WebSocket consumer URL
     path("<str:serverId>/<str:channelId>", WebChatConsumer.as_asgi())
 ]
 
+# Serving media files in DEBUG mode
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

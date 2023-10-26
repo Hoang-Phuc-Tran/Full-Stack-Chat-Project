@@ -34,20 +34,35 @@ interface Message {
   timestamp: string;
 }
 
+// Define a functional component for rendering a chat interface.
 const messageInterface = (props: ServerChannelProps) => {
+  // Destructure the 'data' property from props.
   const { data } = props;
+
+  // Access the theme from the UI library.
   const theme = useTheme();
+
+  // Define state variables for managing new messages and the input message.
   const [newMessage, setNewMessage] = useState<Message[]>([]);
   const [message, setMessage] = useState("");
+
+  // Extract 'serverId' and 'channelId' from the URL parameters.
   const { serverId, channelId } = useParams();
+
+  // Define a default server name if data is not available.
   const server_name = data?.[0]?.name ?? "Server";
+
+  // Define a custom hook to fetch data related to the server.
   const { fetchData } = useCrud<Server>([], `/messages/?channel_id=${channelId}`);
 
+  // Construct the WebSocket URL based on the server and channel.
   const socketUrl = channelId ? `ws://127.0.0.1:8000/${serverId}/${channelId}` : null;
 
+  // Initialize a WebSocket connection and handle various WebSocket events.
   const { sendJsonMessage } = useWebSocket(socketUrl, {
     onOpen: async () => {
       try {
+        // Fetch initial data when the WebSocket connection is established.
         const data = await fetchData();
         setNewMessage([]);
         setNewMessage(Array.isArray(data) ? data : []);
@@ -63,15 +78,32 @@ const messageInterface = (props: ServerChannelProps) => {
       console.log("Error!");
     },
     onMessage: (msg) => {
+      // Parse and process incoming WebSocket messages.
       const data = JSON.parse(msg.data);
       setNewMessage((prev_msg) => [...prev_msg, data.new_message]);
       setMessage("");
     },
   });
 
+  // Handle the 'Enter' key press to send a message.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      if (message !== "") {
+        // Just check if the message is not empty
+        sendJsonMessage({
+          type: "message",
+          message,
+        } as SendMessageData);
+      }
+    }
+  };
+
+  // Handle form submission to send a message.
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // Check if the message is not empty before sending.
+    if (message !== "") {
       sendJsonMessage({
         type: "message",
         message,
@@ -79,14 +111,7 @@ const messageInterface = (props: ServerChannelProps) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    sendJsonMessage({
-      type: "message",
-      message,
-    } as SendMessageData);
-  };
-
+  // Function to format a timestamp string for display.
   function formatTimeStamp(timestamp: string): string {
     const date = new Date(Date.parse(timestamp));
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;

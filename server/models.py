@@ -5,23 +5,28 @@ from django.shortcuts import get_object_or_404
 from .validators import validate_icon_image_size, validate_image_file_extension
 
 
+# Define the upload path for server icon
 def server_icon_upload_path(instance, filename):
     return f"server/{instance.id}/server_icon/{filename}"
 
 
+# Define the upload path for server banner
 def server_banner_upload_path(instance, filename):
     return f"server/{instance.id}/server_banner/{filename}"
 
 
+# Define the upload path for category icon
 def category_icon_upload_path(instance, filename):
     return f"category/{instance.id}/category_icon/{filename}"
 
 
+# Category model
 class Category(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True, null=True)
     icon = models.FileField(upload_to=category_icon_upload_path, null=True, blank=True)
 
+    # Handle icon deletion on icon change
     def save(self, *args, **kwargs):
         if self.id:
             existing = get_object_or_404(Category, id=self.id)
@@ -32,6 +37,7 @@ class Category(models.Model):
 
     @receiver(models.signals.pre_delete, sender="server.Category")
     def category_delete_files(sender, instance, **kwargs):
+        # Delete icon files on category delete
         for field in instance._meta.fields:
             if field.name == "icon":
                 file = getattr(instance, field.name)
@@ -42,6 +48,7 @@ class Category(models.Model):
         return self.name
 
 
+# Server model
 class Server(models.Model):
     name = models.CharField(max_length=100)
     owner = models.ForeignKey(
@@ -86,6 +93,7 @@ class Server(models.Model):
         return f"{self.name}-{self.id}"
 
 
+# Channel model
 class Channel(models.Model):
     name = models.CharField(max_length=100)
     owner = models.ForeignKey(

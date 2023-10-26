@@ -21,24 +21,37 @@ interface ServerChannelProps {
   data: Server[];
 }
 
+// Define a functional component for rendering a list of server channels.
 const MessageInterfaceChannels = (props: ServerChannelProps) => {
+  // Destructure the 'data' property from props.
   const { data } = props;
+
+  // Access the theme from the UI library.
   const theme = useTheme();
+
+  // Extract 'serverId' and 'channelId' from the URL parameters.
   const { serverId, channelId } = useParams();
+
+  // Define state variable to manage the side menu's visibility.
   const [sideMenu, setSideMenu] = useState(false);
+
+  // Determine the channel name based on the provided data, or set it to "home" if not found.
   const channelName =
     data
       ?.find((server) => server.id == Number(serverId))
       ?.channel_server?.find((channel) => channel.id === Number(channelId))?.name || "home";
 
+  // Determine if the screen is small based on the media query.
   const isSmallScreen = useMediaQuery(theme.breakpoints.up("sm"));
 
+  // Close the side menu when transitioning to a small screen.
   useEffect(() => {
     if (isSmallScreen && sideMenu) {
       setSideMenu(false);
     }
   }, [isSmallScreen]);
 
+  // Function to toggle the side menu's visibility.
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
     if (
       event.type === "keydown" &&
@@ -50,6 +63,7 @@ const MessageInterfaceChannels = (props: ServerChannelProps) => {
     setSideMenu(open);
   };
 
+  // Function to render the list of server channels within the side menu.
   const list = () => (
     <Box
       sx={{ paddingTop: `${theme.primaryAppBar.height}px`, minWidth: 200 }}

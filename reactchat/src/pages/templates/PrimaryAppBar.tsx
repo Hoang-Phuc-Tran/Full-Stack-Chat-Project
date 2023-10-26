@@ -26,23 +26,23 @@ const PrimaryAppBar = () => {
     }
   }, [isSmallScreen]);
 
-  const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+  const toggleDrawer = (open?: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
     if (
+      event &&
       event.type === "keydown" &&
       ((event as React.KeyboardEvent).key === "Tab" ||
         (event as React.KeyboardEvent).key === "Shift")
     ) {
       return;
     }
-    setSideMenu(open);
+
+    // If an explicit 'open' value is provided, use that. Otherwise, toggle the current state.
+    const newValue = open !== undefined ? open : !sideMenu;
+    setSideMenu(newValue);
   };
 
   const list = () => (
-    <Box
-      sx={{ paddingTop: `${theme.primaryAppBar.height}px`, minWidth: 200 }}
-      onClick={toggleDrawer(false)}
-      onKeyDown={toggleDrawer(false)}
-    >
+    <Box sx={{ paddingTop: `${theme.primaryAppBar.height}px`, minWidth: 200 }}>
       <ExploreCategories />
     </Box>
   );
@@ -67,14 +67,19 @@ const PrimaryAppBar = () => {
             color="inherit"
             aria-label="open drawer"
             edge="start"
-            onClick={toggleDrawer(true)}
+            onClick={toggleDrawer()}
             sx={{ mr: 2 }}
           >
             <MenuIcon />
           </IconButton>
         </Box>
 
-        <Drawer anchor="left" open={sideMenu} onClose={toggleDrawer(false)}>
+        <Drawer
+          anchor="left"
+          open={sideMenu}
+          onClose={toggleDrawer(false)}
+          onClick={toggleDrawer(false)}
+        >
           {list()}
         </Drawer>
 
