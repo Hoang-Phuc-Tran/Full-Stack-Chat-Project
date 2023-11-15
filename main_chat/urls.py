@@ -14,7 +14,7 @@ from rest_framework.routers import DefaultRouter
 from django.conf.urls.static import static
 from webchat.consumer import WebChatConsumer
 from webchat.views import MessageViewSet
-from account.views import AccountViewSet
+from account.views import AccountViewSet, JWTCookieTokenObtainPairView
 
 # Initializing a default router
 router = DefaultRouter()
@@ -34,7 +34,7 @@ urlpatterns = [
     path("api/docs/", SpectacularAPIView.as_view(), name="schema"),
     # Swagger UI URL
     path("api/docs/swagger/ui/", SpectacularSwaggerView.as_view()),
-    path("api/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/token/", JWTCookieTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # Including the router URLs
 ] + router.urls
