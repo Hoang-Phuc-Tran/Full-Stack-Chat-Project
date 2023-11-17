@@ -1,8 +1,3 @@
-import { useState } from "react";
-import { useParams } from "react-router-dom";
-import useWebSocket from "react-use-websocket";
-import useCrud from "../../hooks/useCrud";
-import { Server } from "../../@types/server.d";
 import {
   Avatar,
   Box,
@@ -16,7 +11,9 @@ import {
 } from "@mui/material";
 import MessageInterfaceChannels from "./MessageInterfaceChannels";
 import Scroll from "./Scroll";
-import React from "react";
+import { useParams } from "react-router-dom";
+import { Server } from "../../@types/server.d";
+import useChatWebSocket from "../../services/chatService";
 
 interface SendMessageData {
   type: string;
@@ -34,76 +31,22 @@ interface Message {
   timestamp: string;
 }
 
-// Define a functional component for rendering a chat interface.
 const messageInterface = (props: ServerChannelProps) => {
-  // Destructure the 'data' property from props.
   const { data } = props;
-
-  // Access the theme from the UI library.
   const theme = useTheme();
 
-  // Define state variables for managing new messages and the input message.
-  const [newMessage, setNewMessage] = useState<Message[]>([]);
-  const [message, setMessage] = useState("");
-
-  // Extract 'serverId' and 'channelId' from the URL parameters.
   const { serverId, channelId } = useParams();
 
-  // Define a default server name if data is not available.
+  const { newMessage, message, setMessage, sendJsonMessage } = useChatWebSocket(
+    channelId || "",
+    serverId || ""
+  );
+
   const server_name = data?.[0]?.name ?? "Server";
 
-  // Define a custom hook to fetch data related to the server.
-  const { fetchData } = useCrud<Server>([], `/messages/?channel_id=${channelId}`);
-
-  // Construct the WebSocket URL based on the server and channel.
-  const socketUrl = channelId ? `ws://127.0.0.1:8000/${serverId}/${channelId}` : null;
-
-  // Initialize a WebSocket connection and handle various WebSocket events.
-  const { sendJsonMessage } = useWebSocket(socketUrl, {
-    onOpen: async () => {
-      try {
-        // Fetch initial data when the WebSocket connection is established.
-        const data = await fetchData();
-        setNewMessage([]);
-        setNewMessage(Array.isArray(data) ? data : []);
-        console.log("Connected!!!");
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    onClose: () => {
-      console.log("Closed!");
-    },
-    onError: () => {
-      console.log("Error!");
-    },
-    onMessage: (msg) => {
-      // Parse and process incoming WebSocket messages.
-      const data = JSON.parse(msg.data);
-      setNewMessage((prev_msg) => [...prev_msg, data.new_message]);
-      setMessage("");
-    },
-  });
-
-  // Handle the 'Enter' key press to send a message.
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (message !== "") {
-        // Just check if the message is not empty
-        sendJsonMessage({
-          type: "message",
-          message,
-        } as SendMessageData);
-      }
-    }
-  };
-
-  // Handle form submission to send a message.
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Check if the message is not empty before sending.
-    if (message !== "") {
       sendJsonMessage({
         type: "message",
         message,
@@ -111,7 +54,14 @@ const messageInterface = (props: ServerChannelProps) => {
     }
   };
 
-  // Function to format a timestamp string for display.
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    sendJsonMessage({
+      type: "message",
+      message,
+    } as SendMessageData);
+  };
+
   function formatTimeStamp(timestamp: string): string {
     const date = new Date(Date.parse(timestamp));
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
@@ -153,66 +103,71 @@ const messageInterface = (props: ServerChannelProps) => {
         </Box>
       ) : (
         <>
-          <Scroll>
-            <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-              {newMessage.map((msg: Message, index: number) => {
-                return (
-                  <ListItem key={index} alignItems="flex-start">
-                    <ListItemAvatar>
-                      <Avatar alt="user image" />
-                    </ListItemAvatar>
-                    <ListItemText
-                      primaryTypographyProps={{
-                        fontSize: "12px",
-                        variant: "body2",
-                      }}
-                      primary={
-                        <>
-                          <Typography
-                            component="span"
-                            variant="body1"
-                            color="text.primary"
-                            sx={{ display: "inline", fontW: 600 }}
-                          >
-                            {msg.sender}
-                          </Typography>
-                          <Typography component="span" variant="caption" color="textSecondary">
-                            {" at "}
-                            {formatTimeStamp(msg.timestamp)}
-                          </Typography>
-                        </>
-                      }
-                      secondary={
-                        <>
-                          <Typography
-                            variant="body1"
-                            style={{
-                              overflowWrap: "break-word",
-                              paddingRight: "69px",
-                              whiteSpace: "normal",
-                              textOverflow: "clip",
-                              width: "100%", // Ensure Typography takes up full width
-                              display: "block", // Ensure Typography behaves as a block-level element
-                            }}
-                            sx={{
-                              display: "inline",
-                              lineHeight: 1.2,
-                              fontWeight: 400,
-                              letterSpacing: "-0.2px",
-                            }}
-                            component="div"
-                            color="text.primary"
-                          >
-                            {msg.content}
-                          </Typography>
-                        </>
-                      }
-                    />
-                  </ListItem>
-                );
-              })}
-            </List>
-          </Scroll>
+          <Box
+            sx={{
+              overflow: "hidden",
+              p: 0,
+              height: `calc(100vh - 100px)`,
+            }}
+          >
+            <Scroll>
+              <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+                {newMessage.map((msg: Message, index: number) => {
+                  return (
+                    <ListItem key={index} alignItems="flex-start">
+                      <ListItemAvatar>
+                        <Avatar alt="user image" />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primaryTypographyProps={{
+                          fontSize: "12px",
+                          variant: "body2",
+                        }}
+                        primary={
+                          <>
+                            <Typography
+                              component="span"
+                              variant="body1"
+                              color="text.primary"
+                              sx={{ display: "inline", fontW: 600 }}
+                            >
+                              {msg.sender}
+                            </Typography>
+                            <Typography component="span" variant="caption" color="textSecondary">
+                              {" at "}
+                              {formatTimeStamp(msg.timestamp)}
+                            </Typography>
+                          </>
+                        }
+                        secondary={
+                          <>
+                            <Typography
+                              variant="body1"
+                              style={{
+                                overflow: "visible",
+                                whiteSpace: "normal",
+                                textOverflow: "clip",
+                              }}
+                              sx={{
+                                display: "inline",
+                                lineHeight: 1.2,
+                                fontWeight: 400,
+                                letterSpacing: "-0.2px",
+                              }}
+                              component="span"
+                              color="text.primary"
+                            >
+                              {msg.content}
+                            </Typography>
+                          </>
+                        }
+                      />
+                    </ListItem>
+                  );
+                })}
+              </List>
+            </Scroll>
+          </Box>
           <Box sx={{ position: "sticky", bottom: 0, width: "100%" }}>
             <form
               onSubmit={handleSubmit}

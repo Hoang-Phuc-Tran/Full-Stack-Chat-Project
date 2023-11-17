@@ -1,6 +1,8 @@
 from django.db.models import Count
+from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
-from rest_framework import viewsets
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,6 +10,46 @@ from rest_framework.response import Response
 from .models import Category, Server
 from .schema import server_list_docs
 from .serializer import CategorySerializer, ServerSerializer
+
+
+class ServerMemebershipViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, server_id):
+        server = get_object_or_404(Server, id=server_id)
+
+        user = request.user
+
+        if server.member.filter(id=user.id).exists():
+            return Response({"error": "User is already a member"}, status=status.HTTP_409_CONFLICT)
+
+        server.member.add(user)
+
+        return Response({"message": "User joined server successfully"}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["DELETE"])
+    def remove_member(self, request, server_id):
+        server = get_object_or_404(Server, id=server_id)
+        user = request.user
+
+        if not server.member.filter(id=user.id).exists():
+            return Response({"error": "User is not a member"}, status=status.HTTP_404_NOT_FOUND)
+
+        if server.owner == user:
+            return Response({"error": "Owners cannot be removed as a member"}, status=status.HTTP_409_CONFLICT)
+
+        server.member.remove(user)
+
+        return Response({"message": "User removed from server..."}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=["GET"])
+    def is_member(self, request, server_id=None):
+        server = get_object_or_404(Server, id=server_id)
+        user = request.user
+
+        is_member = server.member.filter(id=user.id).exists()
+
+        return Response({"is_member": is_member})
 
 
 class CategoryListViewSet(viewsets.ViewSet):
@@ -25,37 +67,41 @@ class ServerListViewSet(viewsets.ViewSet):
 
     @server_list_docs
     def list(self, request):
-        """
-        A viewset for handling operations related to the Server model.
+        """Returns a list of servers filtered by various parameters.
 
-        This viewset provides functionality to retrieve a list of Server objects
-        with various filtering options, such as filtering by category, user,
-        server ID, and including the number of members.
+        This method retrieves a queryset of servers based on the query parameters
+        provided in the `request` object. The following query parameters are supported:
 
-        Attributes:
-            queryset (QuerySet): The default queryset including all Server objects.
+        - `category`: Filters servers by category name.
+        - `qty`: Limits the number of servers returned.
+        - `by_user`: Filters servers by user ID, only returning servers that the user is a member of.
+        - `by_serverid`: Filters servers by server ID.
+        - `with_num_members`: Annotates each server with the number of members it has.
 
-        Methods:
-            list(request): Handles the list request for Server objects.
+        Args:
+        request: A Django Request object containing query parameters.
 
-        Example:
-            To retrieve a list of servers filtered by category and limited to 10
-            results, make a GET request with query parameters:
-            /servers/?category=gaming&qty=10
+        Returns:
+        A queryset of servers filtered by the specified parameters.
 
-        Parameters:
-            request (Request): The HTTP request object containing the following
-                query parameters:
+        Raises:
+        AuthenticationFailed: If the query includes the 'by_user' or 'by_serverid'
+            parameters and the user is not authenticated.
+        ValidationError: If there is an error parsing or validating the query parameters.
+            This can occur if the `by_serverid` parameter is not a valid integer, or if the
+            server with the specified ID does not exist.
 
-                - category (str): Filter servers by category.
+        Examples:
+        To retrieve all servers in the 'gaming' category with at least 5 members, you can make
+        the following request:
 
-                - qty (int): Limit the number of results.
+            GET /servers/?category=gaming&with_num_members=true&num_members__gte=5
 
-                - by_user (bool): Filter servers by the requesting user (if true).
+        To retrieve the first 10 servers that the authenticated user is a member of, you can make
+        the following request:
 
-                - by_serverid (str): Filter servers by server ID.
+            GET /servers/?by_user=true&qty=10
 
-                - with_num_members (bool): Include the number of members (if true).
         """
         category = request.query_params.get("category")
         qty = request.query_params.get("qty")
@@ -76,23 +122,19 @@ class ServerListViewSet(viewsets.ViewSet):
         if with_num_members:
             self.queryset = self.queryset.annotate(num_members=Count("member"))
 
-        if qty:
-            self.queryset = self.queryset[: int(qty)]
-
         if by_serverid:
-            # if by_user and request.user.is_authenticated:
+            # if not request.user.is_authenticated:
             #     raise AuthenticationFailed()
+
             try:
                 self.queryset = self.queryset.filter(id=by_serverid)
                 if not self.queryset.exists():
-                    raise ValidationError(
-                        detail=f"Server with id {by_serverid} not found"
-                    )
+                    raise ValidationError(detail=f"Server with id {by_serverid} not found")
             except ValueError:
                 raise ValidationError(detail="Server value error")
 
-        serializer = ServerSerializer(
-            self.queryset, many=True, context={"num_members": with_num_members}
-        )
+        if qty:
+            self.queryset = self.queryset[: int(qty)]
 
+        serializer = ServerSerializer(self.queryset, many=True, context={"num_members": with_num_members})
         return Response(serializer.data)
