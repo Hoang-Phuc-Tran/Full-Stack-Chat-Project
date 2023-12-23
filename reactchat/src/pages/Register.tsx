@@ -1,5 +1,5 @@
 import { useFormik } from "formik";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthServiceContext } from "../context/AuthContext";
 import { Box, Button, Container, TextField, Typography } from "@mui/material";
 
@@ -10,6 +10,7 @@ const Register = () => {
     initialValues: {
       username: "",
       password: "",
+      confirmPassword: "", // Added confirmPassword field
     },
     validate: (values) => {
       const errors: Partial<typeof values> = {};
@@ -18,6 +19,11 @@ const Register = () => {
       }
       if (!values.password) {
         errors.password = "Required";
+      }
+      if (!values.confirmPassword) {
+        errors.confirmPassword = "Required";
+      } else if (values.password !== values.confirmPassword) {
+        errors.confirmPassword = "Passwords must match";
       }
       return errors;
     },
@@ -84,14 +90,26 @@ const Register = () => {
             error={!!formik.touched.password && !!formik.errors.password}
             helperText={formik.touched.password && formik.errors.password}
           ></TextField>
-          <Button
-            variant="contained"
-            disableElevation
-            type="submit"
-            sx={{ mt: 1, mb: 2 }}
-          >
+          <TextField
+            margin="normal"
+            fullWidth
+            id="confirmPassword"
+            name="confirmPassword"
+            type="password"
+            label="Confirm Password"
+            value={formik.values.confirmPassword}
+            onChange={formik.handleChange}
+            error={!!formik.touched.confirmPassword && !!formik.errors.confirmPassword}
+            helperText={formik.touched.confirmPassword && formik.errors.confirmPassword}
+          ></TextField>
+          <Button variant="contained" disableElevation type="submit" sx={{ mt: 1, mb: 2 }}>
             Next
           </Button>
+          <Link to="/Login" style={{ textDecoration: "none", marginLeft: "10px" }}>
+            <Button variant="contained" sx={{ mt: 1, mb: 2 }}>
+              Have account ?
+            </Button>
+          </Link>
         </Box>
       </Box>
     </Container>

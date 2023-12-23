@@ -11,10 +11,10 @@ def validate_icon_image_size(image):
         # Open the image using PIL (Pillow).
         with Image.open(image) as img:
             # Check if the image dimensions exceed 70x70 pixels.
-            if img.width > 70 or img.height > 70:
+            if img.width > 1000 or img.height > 1000:
                 # Raise a ValidationError if the image size is too large.
                 raise ValidationError(
-                    f"the maximum allowed dimensions for the image are 70x70 - size of image you uploaded: {img.size}"
+                    f"dimensions for the image are 1000x1000 - size of image you uploaded: {img.size}"
                 )
 
 

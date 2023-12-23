@@ -2,7 +2,7 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import JsonWebsocketConsumer
 from django.contrib.auth import get_user_model
 from server.models import Server
-
+from server.models import Channel
 from .models import Conversation, Message
 
 User = get_user_model()
@@ -20,13 +20,24 @@ class WebChatConsumer(JsonWebsocketConsumer):
 
         if not self.user.is_authenticated:
             self.close(code=4001)
+            return
 
+        print(Server.objects.filter(id=3).exists())
         self.channel_id = self.scope["url_route"]["kwargs"]["channelId"]
+        print(f"Attempting to connect to channel ID: {self.channel_id}")
 
-        self.user = User.objects.get(id=self.user.id)
+        try:
+            channel = Channel.objects.get(id=self.channel_id)
+            server = channel.server
+        except Channel.DoesNotExist:
+            self.close(code=4002)  # Custom error code for channel not found
+            return
 
-        server = Server.objects.get(id=self.channel_id)
         self.is_member = server.member.filter(id=self.user.id).exists()
+
+        if not self.is_member:
+            self.close(code=4003)  # Custom error code for non-member
+            return
 
         async_to_sync(self.channel_layer.group_add)(self.channel_id, self.channel_name)
 

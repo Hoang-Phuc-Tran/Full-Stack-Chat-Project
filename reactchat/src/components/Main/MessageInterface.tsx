@@ -47,10 +47,13 @@ const messageInterface = (props: ServerChannelProps) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      sendJsonMessage({
-        type: "message",
-        message,
-      } as SendMessageData);
+      if (message) {
+        sendJsonMessage({
+          type: "message",
+          message: message.trim(),
+        } as SendMessageData);
+        setMessage(""); // Clear the message field after sending
+      }
     }
   };
 
@@ -103,72 +106,64 @@ const messageInterface = (props: ServerChannelProps) => {
         </Box>
       ) : (
         <>
-          <Box
-            sx={{
-              overflow: "hidden",
-              p: 0,
-              height: `calc(100vh - 100px)`,
-            }}
-          >
-            <Scroll>
-              <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-                {newMessage.map((msg: Message, index: number) => {
-                  return (
-                    <ListItem key={index} alignItems="flex-start">
-                      <ListItemAvatar>
-                        <Avatar alt="user image" />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primaryTypographyProps={{
-                          fontSize: "12px",
-                          variant: "body2",
-                        }}
-                        primary={
-                          <>
-                            <Typography
-                              component="span"
-                              variant="body1"
-                              color="text.primary"
-                              sx={{ display: "inline", fontW: 600 }}
-                            >
-                              {msg.sender}
-                            </Typography>
-                            <Typography component="span" variant="caption" color="textSecondary">
-                              {" at "}
-                              {formatTimeStamp(msg.timestamp)}
-                            </Typography>
-                          </>
-                        }
-                        secondary={
-                          <>
-                            <Typography
-                              variant="body1"
-                              style={{
-                                overflow: "visible",
-                                whiteSpace: "normal",
-                                textOverflow: "clip",
-                              }}
-                              sx={{
-                                display: "inline",
-                                lineHeight: 1.2,
-                                fontWeight: 400,
-                                letterSpacing: "-0.2px",
-                              }}
-                              component="span"
-                              color="text.primary"
-                            >
-                              {msg.content}
-                            </Typography>
-                          </>
-                        }
-                      />
-                    </ListItem>
-                  );
-                })}
-              </List>
-            </Scroll>
-          </Box>
-          <Box sx={{ position: "sticky", bottom: 0, width: "100%" }}>
+          <Scroll>
+            <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+              {newMessage.map((msg: Message, index: number) => {
+                return (
+                  <ListItem key={index} alignItems="flex-start">
+                    <ListItemAvatar>
+                      <Avatar alt="user image" />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primaryTypographyProps={{
+                        fontSize: "12px",
+                        variant: "body2",
+                      }}
+                      primary={
+                        <>
+                          <Typography
+                            component="span"
+                            variant="body1"
+                            color="text.primary"
+                            sx={{ display: "inline", fontW: 600 }}
+                          >
+                            {msg.sender}
+                          </Typography>
+                          <Typography component="span" variant="caption" color="textSecondary">
+                            {" at "}
+                            {formatTimeStamp(msg.timestamp)}
+                          </Typography>
+                        </>
+                      }
+                      secondary={
+                        <>
+                          <Typography
+                            variant="body1"
+                            style={{
+                              wordWrap: "break-word", // Enables breaking of long words
+                              whiteSpace: "pre-wrap", // Preserves spaces and line breaks
+                              marginRight: "50px", //
+                            }}
+                            sx={{
+                              display: "block",
+                              lineHeight: 1.2,
+                              fontWeight: 400,
+                              letterSpacing: "-0.2px",
+                            }}
+                            component="span"
+                            color="text.primary"
+                          >
+                            {msg.content}
+                          </Typography>
+                        </>
+                      }
+                    />
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Scroll>
+          <Box sx={{ position: "sticky", bottom: 0, width: "95%" }}>
             <form
               onSubmit={handleSubmit}
               style={{
