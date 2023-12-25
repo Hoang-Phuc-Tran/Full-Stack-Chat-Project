@@ -1,5 +1,9 @@
 # Course Description
 
+
+https://github.com/Hoang-Phuc-Tran/Full-Stack-Chat-Project/assets/120700092/6509f160-78bf-46e3-841e-b4b2bd6aaf77
+
+
 ## Overview
 This course is designed to teach the fundamentals of building a chat server administration API and integrating it with a front-end templating framework using Django DRF and React. It includes comprehensive modules covering everything from source control to API integration and chat service functionalities with a focus on features like authentication.
 
